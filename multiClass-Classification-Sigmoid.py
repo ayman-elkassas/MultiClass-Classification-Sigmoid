@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.io import loadmat
 
-data = loadmat('ex3data1.mat')
+data=loadmat('ex3data1.mat')
 
 # data describe => 400 feature and 10 classes from (1->10)
 # print('classes = ',list(set(data['y'].flatten())))
@@ -84,6 +84,7 @@ def one_vs_all(X,y,num_labels,learning_rate):
     print('X shape ',X.shape)
 
     # labels are 1-indexed instead of 0-indexed
+    # begin train each classifier and get it is own theta vector
     for i in range(1,num_labels + 1):
         theta=np.zeros(params + 1)
         y_i=np.array([1 if label == i else 0 for label in y])
@@ -95,3 +96,101 @@ def one_vs_all(X,y,num_labels,learning_rate):
 
     return all_theta
 
+
+# todo: note v.i
+# if you have n feature in 1 class then theta vector 1*n as one classifier
+# if you have n features in m classes then theta 'matrix' m*n as m classifiers
+
+rows=data['X'].shape[0]
+params=data['X'].shape[1]
+
+print('===================================================')
+
+all_theta=np.zeros((10,params + 1))
+
+# print('all_theta \n',all_theta)
+# print('all_theta shape \n',all_theta.shape)
+#
+# print('===================================================')
+
+# prepare training data
+
+X=np.insert(data['X'],0,values=np.ones(rows),axis=1)
+
+print(X)
+print('X Shape = ',X.shape)
+
+print('===================================================')
+
+theta=np.zeros(params + 1)
+
+print('theta \n',theta)
+
+print('===================================================')
+y_0=np.array([1 if label == 0 else 0 for label in data['y']])
+
+print('y_0')
+print(y_0.shape)
+print(y_0)
+
+print('===================================================')
+
+y_0=np.reshape(y_0,(rows,1))
+
+print('y_0')
+print(y_0.shape)
+print(y_0)
+
+print('===================================================')
+
+# print()
+# print('X.shape = ',X.shape)
+# print()
+# print('y.shape = ',y_0.shape)
+# print()
+# print('theta.shape = ',theta.shape)
+# print()
+# print('all_theta.shape = ',all_theta.shape)
+#
+# print()
+# print('data array = ' , np.unique(data['y']))
+#
+# print()
+
+# todo:theta vector for first classifier only because nums of label is equal 1
+all_theta=one_vs_all(data['X'],data['y'],10,.001)
+
+print('Theta shape =   ',all_theta.shape)
+print('Theta = ')
+print(all_theta)
+
+
+def predict_all(X,all_theta):
+    rows=X.shape[0]
+    params=X.shape[1]
+    num_labels=all_theta.shape[0]
+
+    # same as before, insert ones to match the shape
+    X=np.insert(X,0,values=np.ones(rows),axis=1)
+
+    # convert to matrices
+    X=np.matrix(X)
+    all_theta=np.matrix(all_theta)
+
+    # compute the class probability for each class on each training instance
+    h=sigmoid(X * all_theta.T)
+
+    # create array of the index with the maximum probability
+    h_argmax=np.argmax(h,axis=1)
+
+    # because our array was zero-indexed we need to add one for the true label prediction
+    h_argmax=h_argmax + 1
+
+    return h_argmax
+
+
+# then in test any sample passing it to sigmoid function and get value and threshold classify
+y_pred=predict_all(data['X'],all_theta)
+correct=[1 if a == b else 0 for (a,b) in zip(y_pred,data['y'])]
+accuracy=(sum(map(int,correct)) / float(len(correct)))
+print('accuracy = {0}%'.format(accuracy * 100))
